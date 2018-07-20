@@ -262,11 +262,36 @@ In this section you will be creating and executing stored procedures. You will b
 Task - Create a stored procedure that selects the first and last names of all the employees.
 */
 
+-- create view
 CREATE VIEW Get_Employee_Names AS
 Select FirstName, LastName From Employee;
 
 --to run    
 select * from Get_Employee_Names;
+
+-- proedure 
+create or replace procedure Get_Employee_Names 
+(S OUT SYS_REFCURSOR) as
+begin 
+    open S for
+    select FirstName, LastName From Employee;
+end;
+/
+
+declare 
+    S SYS_REFCURSOR;
+    FN employee.firstname%type;
+    LN employee.lastname%type;
+begin
+    Get_Employee_Names(s);
+    loop
+        fetch s into FN, LN;
+        exit when s%notfound;
+        DBMS_output.put_line('first name: ' || FN || '   last name: ' || LN);
+    end loop;
+    close s;
+end;
+/
 
 /*
 ### 4.2 Stored Procedure Input Parameters
@@ -301,12 +326,49 @@ b.employeeid AS "Supervisor ID", b.firstname AS "Supervisor Name"
 FROM employee a, employee b 
 WHERE a.reportsto = b.employeeid;
 
+-- proedure 
+create or replace procedure Get_Employee_Manager 
+(E_Id in number, M_id out number) as
+begin 
+
+    SELECT reportsto
+    into m_id
+    FROM employee 
+    WHERE employeeid = E_id;  
+    
+end;
+/
+
+declare 
+    m_id number;
+begin
+    Get_Employee_Manager (3, m_id);
+    DBMS_output.put_line('manager id: ' || m_id);
+end;
+/
+
 /*
 ### 4.3 Stored Procedure Output Parameters
 Task - Create a stored procedure that returns the name and company of a customer.
 */
+create or replace procedure Get_customername_company 
+(c_id in NUMBER, FN out varchar2, LN out varchar2,CC out varchar2) as
+begin 
+    
+    select firstname, lastname, company into FN, LN, CC from customer where customerid = c_id;
+end;
+/
 
-select firstname, lastname, company from customer;
+declare 
+    FN varchar2(100);
+    LN varchar2(100);
+    CC varchar2(100);
+begin
+    Get_customername_company ( 1 ,FN, LN, CC);
+    DBMS_output.put_line('first name: ' || FN || '   last name: ' || LN || '  company: ' || CC);
+end;
+/
+
 
 /*
 ## 5. Transactions
